@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nokat Pro - Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+* { font-family: 'Cairo', sans-serif; }
+body { background: #0f172a; }
+.glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+.gradient-text {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.gradient-border {
+    position: relative;
+}
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+.joke-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.joke-card:hover {
+    transform: translateY(-4px);
+}
+.btn-glow:hover {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+@keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+.pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>
+</head>
+<body class="text-slate-100 min-h-screen">
+<div id="app"></div>
+
+<div id="authModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-8 slide-in">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
+                <i data-lucide="laugh" class="w-8 h-8 text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">مرحباً بك في نكات برو</h2>
+            <p class="text-slate-400 text-sm">سجل دخولك للاستمتاع والمشاركة</p>
+        </div>
+        <button id="googleLoginBtn" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 btn-glow">
+            <svg class="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            تسجيل الدخول بحساب Google
+        </button>
+    </div>
+</div>
+
+<div id="adminLoginModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-8 slide-in">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+                <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">دخول لوحة الأدمن</h2>
+            <p class="text-slate-400 text-sm">أدخل كلمة المرور للمتابعة</p>
+        </div>
+        <input type="password" id="adminPassword" placeholder="كلمة المرور" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 text-right">
+        <div class="flex gap-3">
+            <button id="adminLoginBtn" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 rounded-xl transition-all">
+                دخول
+            </button>
+            <button id="adminCancelBtn" class="px-6 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all">
+                إلغاء
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div class="glass px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
+        <span id="toastMessage" class="text-sm font-medium"></span>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, setDoc, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBGguDHbDWYnN92Rfsem94Wy_SEJlTo0Vs",
+    authDomain: "nokat-web.firebaseapp.com",
+    projectId: "nokat-web",
+    storageBucket: "nokat-web.firebasestorage.app",
+    messagingSenderId: "1040357078037",
+    appId: "1:1040357078037:web:80e763580edf03bc3d8a1c",
+    measurementId: "G-R7NHJJ1V72"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let isAdmin = false;
+let jokes = [];
+let categories = ['الكل', 'عام', 'صراحة', '18+', 'نكت زوجية', 'مواقف مضحكة', 'ألغاز'];
+let selectedCategory = 'الكل';
+let bannedUsers = new Set();
+let unsubscribeJokes = null;
+let unsubscribeBans = null;
+
+const ADMIN_PASSWORD = 'NokatAdmin2026!';
+
+const appDiv = document.getElementById('app');
+const authModal = document.getElementById('authModal');
+const adminLoginModal = document.getElementById('adminLoginModal');
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const icon = toast.querySelector('i');
+    
+    toastMessage.textContent = message;
+    icon.setAttribute('data-lucide', type === 'success' ? 'check-circle' : 'alert-circle');
+    icon.className = `w-5 h-5 ${type === 'success' ? 'text-green-400' : 'text-red-400'}`;
+    lucide.createIcons();
+    
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+function renderApp() {
+    const filteredJokes = selectedCategory === 'الكل' 
+        ? jokes 
+        : jokes.filter(j => j.category === selectedCategory);
+
+    appDiv.innerHTML = `
+        <div class="min-h-screen">
+            <!-- Header -->
+            <header class="glass sticky top-0 z-40 border-b border-slate-700/50">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg">
+                                <i data-lucide="laugh" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-black gradient-text">نكات برو</h1>
+                                <p class="text-xs text-slate-400">اضحك من قلبك</p>
+                            </div>
+                        </div>
+                        ${currentUser ? `
+                            <div class="flex items-center gap-3">
+                                ${isAdmin ? `
+                                    <div class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-bold flex items-center gap-1.5">
+                                        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                                        أدمن
+                                    </div>
+                                ` : ''}
+                                <img src="${currentUser.photoURL}" alt="${currentUser.displayName}" class="w-10 h-10 rounded-full ring-2 ring-amber-500">
+                                <button id="logoutBtn" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    <span class="text-sm">خروج</span>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Post Form -->
+                ${currentUser ? `
+                    <div class="glass rounded-2xl p-6 mb-8 slide-in">
+                        <div class="flex items-start gap-4">
+                            <img src="${currentUser.photoURL}" alt="${currentUser.displayName}" class="w-12 h-12 rounded-full ring-2 ring-amber-500/50">
+                            <div class="flex-1">
+                                <textarea id="jokeInput" placeholder="شاركنا نكتة مضحكة..." class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none text-right" rows="3"></textarea>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <select id="categorySelect" class="bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                        ${categories.filter(c => c !== 'الكل').map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                                    </select>
+                                    <button id="postJokeBtn" class="ml-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 btn-glow">
+                                        <i data-lucide="send" class="w-4 h-4"></i>
+                                        نشر النكتة
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="glass rounded-2xl p-8 mb-8 text-center">
+                        <i data-lucide="lock" class="w-12 h-12 mx-auto mb-4 text-amber-500"></i>
+                        <h3 class="text-xl font-bold mb-2">سجل دخولك للمشاركة</h3>
+                        <p class="text-slate-400 mb-4">شارك نكاتك المضحكة مع المجتمع</p>
+                        <button id="showLoginBtn" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold px-8 py-3 rounded-xl transition-all">
+                            تسجيل الدخول
+                        </button>
+                    </div>
+                `}
+
+                <!-- Categories -->
+                <div class="flex gap-2 mb-8 overflow-x-auto scrollbar-hide pb-2">
+                    ${categories.map(cat => `
+                        <button data-category="${cat}" class="category-btn whitespace-nowrap px-5 py-2.5 rounded-xl font-medium transition-all ${selectedCategory === cat 
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg' 
+                            : 'glass text-slate-300 hover:bg-slate-800'}">
+                            ${cat}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-5 h-5 text-amber-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold">${jokes.length}</p>
+                                <p class="text-xs text-slate-400">نكتة</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-green-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold">${jokes.reduce((sum, j) => sum + (j.likes?.length || 0), 0)}</p>
+                                <p class="text-xs text-slate-400">إعجاب</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                <i data-lucide="message-circle" class="w-5 h-5 text-blue-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold">${jokes.reduce((sum, j) => sum + (j.comments?.length || 0), 0)}</p>
+                                <p class="text-xs text-slate-400">تعليق</p>
+                            </div>
+                        </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                <i data-lucide="users" class="w-5 h-5 text-purple-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold">${new Set(jokes.map(j => j.authorId)).size}</p>
+                                <p class="text-xs text-slate-400">مستخدم</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jokes Grid -->
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    ${filteredJokes.length === 0 ? `
+                        <div class="col-span-full glass rounded-2xl p-12 text-center">
+                            <i data-lucide="inbox" class="w-16 h-16 mx-auto mb-4 text-slate-600"></i>
+                            <h3 class="text-xl font-bold mb-2">لا توجد نكت بعد</h3>
+                            <p class="text-slate-400">كن أول من يشارك نكتة في هذا التصنيف!</p>
+                        </div>
+                    ` : filteredJokes.map(joke => `
+                        <div class="joke-card glass rounded-2xl p-6" data-joke-id="${joke.id}">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <img src="${joke.authorPhoto}" alt="${joke.authorName}" class="w-10 h-10 rounded-full">
+                                    <div>
+                                        <p class="font-semibold text-sm">${joke.authorName}</p>
+                                        <p class="text-xs text-slate-500">${joke.timestamp ? new Date(joke.timestamp.seconds * 1000).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }) : 'الآن'}</p>
+                                    </div>
+                                <span class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium">${joke.category}</span>
+                            </div>
+                            
+                            <p class="text-slate-200 mb-4 leading-relaxed min-h-[3rem]">${joke.text}</p>
+                            
+                            <div class="flex items-center gap-2 pt-4 border-t border-slate-700/50">
+                                <button data-action="like" data-id="${joke.id}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all ${joke.likes?.includes(currentUser?.uid) ? 'text-red-500' : 'text-slate-400'}">
+                                    <i data-lucide="heart" class="w-4 h-4 ${joke.likes?.includes(currentUser?.uid) ? 'fill-current' : ''}"></i>
+                                    <span class="text-sm font-medium">${joke.likes?.length || 0}</span>
+                                </button>
+                                <button data-action="comment" data-id="${joke.id}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all text-slate-400">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                    <span class="text-sm font-medium">${joke.comments?.length || 0}</span>
+                                </button>
+                                ${isAdmin ? `
+                                    <div class="mr-auto flex gap-1">
+                                        <button data-action="ban" data-id="${joke.id}" data-user="${joke.authorId}" class="px-3 py-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all" title="حظر المستخدم">
+                                            <i data-lucide="user-x" class="w-4 h-4"></i>
+                                        </button>
+                                        <button data-action="delete" data-id="${joke.id}" class="px-3 py-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all" title="حذف النكتة">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Comments Section -->
+                            <div id="comments-${joke.id}" class="hidden mt-4 pt-4 border-t border-slate-700/50">
+                                <div class="space-y-3 mb-3 max-h-64 overflow-y-auto scrollbar-hide">
+                                    ${(joke.comments || []).map((comment, idx) => `
+                                        <div class="flex gap-3 text-sm">
+                                            <img src="${comment.authorPhoto}" alt="${comment.authorName}" class="w-8 h-8 rounded-full flex-shrink-0">
+                                            <div class="flex-1 glass rounded-lg p-3">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <p class="font-semibold text-xs">${comment.authorName}</p>
+                                                    ${isAdmin ? `
+                                                        <button data-action="delete-comment" data-joke="${joke.id}" data-index="${idx}" class="text-slate-500 hover:text-red-400">
+                                                            <i data-lucide="x" class="w-3 h-3"></i>
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
+                                                <p class="text-slate-300">${comment.text}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${currentUser ? `
+                                    <div class="flex gap-2">
+                                        <input type="text" placeholder="اكتب تعليقك..." data-joke="${joke.id}" class="comment-input flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                        <button data-action="add-comment" data-id="${joke.id}" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all">
+                                            <i data-lucide="send" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </main>
+
+            <!-- Admin Button -->
+            <button id="adminBtn" class="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-2xl flex items-center justify-center transition-all btn-glow ${isAdmin ? 'pulse-ring' : ''}">
+                <i data-lucide="${isAdmin ? 'shield-off' : 'shield'}" class="w-6 h-6 text-white"></i>
+            </button>
+        </div>
+    `;
+    
+    lucide.createIcons();
+    attachEventListeners();
+}
+
+function attachEventListeners() {
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        signOut(auth);
+        isAdmin = false;
+        showToast('تم تسجيل الخروج بنجاح');
+    });
+
+    document.getElementById('showLoginBtn')?.addEventListener('click', () => {
+        authModal.classList.remove('hidden');
+        authModal.classList.add('flex');
+    });
+
+    document.getElementById('adminBtn')?.addEventListener('click', () => {
+        if (isAdmin) {
+            isAdmin = false;
+            showToast('تم تسجيل خروج الأدمن');
+            renderApp();
+        } else {
+            adminLoginModal.classList.remove('hidden');
+            adminLoginModal.classList.add('flex');
+        }
+    });
+
+    document.getElementById('postJokeBtn')?.addEventListener('click', postJoke);
+    
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            selectedCategory = e.currentTarget.dataset.category;
+            renderApp();
+        });
+    });
+
+    document.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', handleAction);
+    });
+
+    document.querySelectorAll('.comment-input').forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const jokeId = e.target.dataset.joke;
+                const btn = document.querySelector(`[data-action="add-comment"][data-id="${jokeId}"]`);
+                btn?.click();
+            }
+        });
+    });
+}
+
+async function handleAction(e) {
+    const btn = e.currentTarget;
+    const action = btn.dataset.action;
+    const jokeId = btn.dataset.id || btn.dataset.joke;
+
+    if (!currentUser && action !== 'delete' && action !== 'ban') {
+        showToast('يجب تسجيل الدخول أولاً', 'error');
+        return;
+    }
+
+    const jokeRef = doc(db, 'jokes', jokeId);
+    
+    try {
+        switch(action) {
+            case 'like':
+                const joke = jokes.find(j => j.id === jokeId);
+                const hasLiked = joke.likes?.includes(currentUser.uid);
+                await updateDoc(jokeRef, {
+                    likes: hasLiked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid)
+                });
+                break;
+                
+            case 'comment':
+                const commentsDiv = document.getElementById(`comments-${jokeId}`);
+                commentsDiv.classList.toggle('hidden');
+                break;
+                
+            case 'add-comment':
+                const input = document.querySelector(`.comment-input[data-joke="${jokeId}"]`);
+                const text = input.value.trim();
+                if (!text) return;
+                
+                if (bannedUsers.has(currentUser.uid)) {
+                    showToast('تم حظرك من التعليق', 'error');
+                    return;
+                }
+                
+                const comment = {
+                    text,
+                    authorId: currentUser.uid,
+                    authorName: currentUser.displayName,
+                    authorPhoto: currentUser.photoURL,
+                    timestamp: serverTimestamp()
+                };
+                await updateDoc(jokeRef, {
+                    comments: arrayUnion(comment)
+                });
+                input.value = '';
+                showToast('تم إضافة التعليق');
+                break;
+                
+            case 'delete-comment':
+                if (!isAdmin) return;
+                const joke2 = jokes.find(j => j.id === jokeId);
+                const idx = parseInt(btn.dataset.index);
+                const updatedComments = joke2.comments.filter((_, i) => i !== idx);
+                await updateDoc(jokeRef, { comments: updatedComments });
+                showToast('تم حذف التعليق');
+                break;
+                
+            case 'delete':
+                if (!isAdmin) return;
+                if (confirm('هل أنت متأكد من حذف هذه النكتة؟')) {
+                    await deleteDoc(jokeRef);
+                    showToast('تم حذف النكتة');
+                }
+                break;
+                
+            case 'ban':
+                if (!isAdmin) return;
+                const userId = btn.dataset.user;
+                if (confirm('هل تريد حظر هذا المستخدم؟')) {
+                    await setDoc(doc(db, 'bannedUsers', userId), {
+                        bannedAt: serverTimestamp(),
+                        bannedBy: currentUser.uid
+                    });
+                    showToast('تم حظر المستخدم');
+                }
+                break;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('حدث خطأ', 'error');
+    }
+}
+
+async function postJoke() {
+    const input = document.getElementById('jokeInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const text = input.value.trim();
+    
+    if (!text) {
+        showToast('اكتب النكتة أولاً', 'error');
+        return;
+    }
+    
+    if (bannedUsers.has(currentUser.uid)) {
+        showToast('تم حظرك من النشر', 'error');
+        return;
+    }
+    
+    try {
+        await addDoc(collection(db, 'jokes'), {
+            text,
+            category: categorySelect.value,
+            authorId: currentUser.uid,
+            authorName: currentUser.displayName,
+            authorPhoto: currentUser.photoURL,
+            likes: [],
+            comments: [],
+            timestamp: serverTimestamp()
+        });
+        
+        input.value = '';
+        showToast('تم نشر النكتة بنجاح!');
+    } catch (error) {
+        console.error('Error posting joke:', error);
+        showToast('حدث خطأ في النشر', 'error');
+    }
+}
+
+function initRealtimeListeners() {
+    const jokesQuery = query(collection(db, 'jokes'), orderBy('timestamp', 'desc'));
+    unsubscribeJokes = onSnapshot(jokesQuery, (snapshot) => {
+        jokes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderApp();
+    });
+
+    const bansQuery = query(collection(db, 'bannedUsers'));
+    unsubscribeBans = onSnapshot(bansQuery, (snapshot) => {
+        bannedUsers = new Set(snapshot.docs.map(doc => doc.id));
+    });
+}
+
+// Auth handlers
+document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+    try {
+        await signInWithPopup(auth, provider);
+        authModal.classList.add('hidden');
+        showToast('تم تسجيل الدخول بنجاح');
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast('فشل تسجيل الدخول', 'error');
+    }
+});
+
+document.getElementById('adminLoginBtn').addEventListener('click', () => {
+    const password = document.getElementById('adminPassword').value;
+    if (password === ADMIN_PASSWORD) {
+        isAdmin = true;
+        adminLoginModal.classList.add('hidden');
+        document.getElementById('adminPassword').value = '';
+        showToast('تم تفعيل وضع الأدمن');
+        renderApp();
+    } else {
+        showToast('كلمة المرور خاطئة', 'error');
+    }
+});
+
+document.getElementById('adminCancelBtn').addEventListener('click', () => {
+    adminLoginModal.classList.add('hidden');
+    document.getElementById('adminPassword').value = '';
+});
+
+authModal.addEventListener('click', (e) => {
+    if (e.target === authModal) authModal.classList.add('hidden');
+});
+
+adminLoginModal.addEventListener('click', (e) => {
+    if (e.target === adminLoginModal) adminLoginModal.classList.add('hidden');
+});
+
+// Auth state observer
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (!user) {
+        isAdmin = false;
+        authModal.classList.remove('hidden');
+        authModal.classList.add('flex');
+    } else {
+        authModal.classList.add('hidden');
+    }
+    renderApp();
+});
+
+// Initialize
+initRealtimeListeners();
+lucide.createIcons();
+</script>
+</body>
+  </html>
